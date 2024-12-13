@@ -36,11 +36,11 @@ export const generate1InchSwapParmas = (
   amount: number,
   account: string,
   slippage: number,
-  disableEstimate?: boolean,
-  allowPartialFill?: boolean,
-  includeTokensInfo?: boolean,
-  includeProtocols?: boolean,
-  includeGas?: boolean
+  disableEstimate: boolean = false,
+  allowPartialFill: boolean = false,
+  includeTokensInfo: boolean = false,
+  includeProtocols: boolean = false,
+  includeGas: boolean = false
 ): I1InchSwapParams => {
   return {
     src: from, // The address of the token you want to swap from
@@ -48,15 +48,16 @@ export const generate1InchSwapParmas = (
     amount: toWei(amount).toString(), // The amount of the fromToken you want to swap (in wei)
     from: account || "", // Wallet address from which the swap will be initiated
     slippage: slippage / 10000, // The maximum acceptable slippage percentage for the swap (e.g., 1 for 1%)
-    disableEstimate: disableEstimate ?? false, // Whether to disable estimation of swap details (set to true to disable)
-    allowPartialFill: allowPartialFill ?? false, // Whether to allow partial filling of the swap order (set to true to allow)
-    includeTokensInfo: includeTokensInfo ?? false, // Include tokens info in response
-    includeProtocols: includeProtocols ?? false, // Include Protocols info in response
-    includeGas: includeGas ?? false, // Include Gas info in response
+    disableEstimate: disableEstimate, // Whether to disable estimation of swap details (set to true to disable)
+    allowPartialFill: allowPartialFill, // Whether to allow partial filling of the swap order (set to true to allow)
+    includeTokensInfo: includeTokensInfo, // Include tokens info in response
+    includeProtocols: includeProtocols, // Include Protocols info in response
+    includeGas: includeGas, // Include Gas info in response
   };
 };
 
-export function getSigner(library: any, account: string) {
-  return library.getSigner(account).connectUnchecked();
+export function getSigner(library: any) {
+  if (!library) throw new Error('Library not available');
+  return library.getSigner().connectUnchecked();
 }
 
