@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { ChainId, ROUTER_ADDRESSES_1INCH } from '@/utils/constants';
 import { useSwap1Inch } from '@/hooks/one-inch';
 import { searchTokens, getChainName } from '@/utils/tokenSearch';
+import { 
+  calculateTokenExchangeWithLimit,
+  type TokenPrices
+} from '@/utils/tokenPrices';
 
 const processImageUri = (uri: string | undefined): string => {
   if (!uri) return '/token-icon.png';
@@ -41,6 +45,12 @@ interface SelectedToken {
   symbol: string;
   name: string;
   logoURI?: string;
+  address: string;
+}
+
+interface TokenInputProps {
+  amount: string;
+  onAmountChange: (value: string) => void;
 }
 
 function isValidChainId(chainId: number): chainId is keyof typeof ROUTER_ADDRESSES_1INCH {
@@ -51,20 +61,26 @@ export default function Home() {
   const [showFromTokens, setShowFromTokens] = useState<boolean>(false);
   const [showToTokens, setShowToTokens] = useState<boolean>(false);
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFromToken, setSelectedFromToken] = useState<SelectedToken>({ 
-    symbol: 'avDAI', 
-    name: 'Aave Avalanche Market DAI',
-    logoURI: '/token-icon.png' 
+    symbol: 'WETH', 
+    name: 'Wrapped Ether',
+    logoURI: '/token-icon.png',
+    address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' // WETH address on Ethereum
   });
   
   const [selectedToToken, setSelectedToToken] = useState<SelectedToken>({ 
-    symbol: 'USDT.e', 
+    symbol: 'USDT', 
     name: 'Tether USD',
-    logoURI: '/token-icon.png' 
+    logoURI: '/token-icon.png',
+    address: '0xdac17f958d2ee523a2206206994597c13d831ec7' // USDT address on Ethereum
   });
   const [selectedChainId, setSelectedChainId] = useState<ChainId>(ChainId.ETHEREUM);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [fromAmount, setFromAmount] = useState<string>("0");
+  const [toAmount, setToAmount] = useState<string>("0");
+  const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const swapHook = useSwap1Inch();
 
   const fetchTokens = async (chainId: number): Promise<void> => {
@@ -119,14 +135,16 @@ export default function Home() {
       setSelectedFromToken({
         symbol: token.symbol,
         name: token.name,
-        logoURI: token.logoURI 
+        logoURI: token.logoURI,
+        address: token.address
       });
       setShowFromTokens(false);
     } else {
       setSelectedToToken({
         symbol: token.symbol,
         name: token.name,
-        logoURI: token.logoURI
+        logoURI: token.logoURI,
+        address: token.address
       });
       setShowToTokens(false);
     }
@@ -143,6 +161,47 @@ export default function Home() {
       console.log('Swap successful:', result);
     } catch (error) {
       console.error('Swap failed:', error);
+    }
+  };
+
+  const handleAmountChange = async (value: string, isFromToken: boolean) => {
+    if (isFromToken) {
+      setFromAmount(value);
+      setIsCalculating(true);
+      setError(null); 
+      
+      try {
+        const numericValue = parseFloat(value);
+        if (isNaN(numericValue)) {
+          setToAmount("0");
+          return;
+        }
+
+        if (!selectedFromToken?.address || !selectedToToken?.address) {
+          throw new Error("Token addresses not available");
+        }
+
+        const exchangeAmount = await calculateTokenExchangeWithLimit(
+          selectedFromToken.address,
+          selectedToToken.address,
+          numericValue,
+          selectedChainId
+        );
+        
+        if (exchangeAmount !== null) {
+          setToAmount(exchangeAmount.toFixed(6));
+        } else {
+          // throw new Error("Failed to calculate exchange amount");
+        }
+      } catch (error) {
+        console.error("Error calculating exchange amount:", error);
+        setError(error instanceof Error ? error.message : "Failed to calculate exchange rate");
+        setToAmount("0");
+      } finally {
+        setIsCalculating(false);
+      }
+    } else {
+      setToAmount(value);
     }
   };
 
@@ -182,7 +241,8 @@ export default function Home() {
                     type="text" 
                     className={styles.tokenInput}
                     placeholder="0.0"
-                    defaultValue="115"
+                    value={fromAmount}
+                    onChange={(e) => handleAmountChange(e.target.value, true)}
                   />
                 </div>
                 <div className={styles.tokenName}>
@@ -211,12 +271,18 @@ export default function Home() {
                     type="text" 
                     className={styles.tokenInput}
                     placeholder="0.0"
-                    defaultValue="110.419901"
+                    value={isCalculating ? "Calculating..." : toAmount}
+                    readOnly
                   />
                 </div>
                 <div className={styles.tokenName}>
                   {selectedToToken.name}
                 </div>
+                {error && (
+                  <div className={styles.errorMessage}>
+                    {error}
+                  </div>
+                )}
               </div>
             </div>
 

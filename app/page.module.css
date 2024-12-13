@@ -86,6 +86,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  position: relative;
 }
 
 .tokenSelector {
@@ -230,4 +231,19 @@
   background: #1a1a1a;
   color: white;
   border-color: #1a1a1a;
+}
+
+.tokenInput.loading {
+  color: #666;
+  cursor: wait;
+}
+
+.errorMessage {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
 }
