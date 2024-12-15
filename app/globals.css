@@ -4,17 +4,19 @@
     "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
     "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
   --1inch__ui-02: #6c86ad;
-  --1inch-bg-02: #ffffff;
+  --1inch-icon-color-01: #2f8af5;
   --1inch-text-01: #222222;
   --1inch-text-03: #06070a;
   --1inch-common-text-03: #2f8af5;
   --1inch-common-text-01: #ffffff;
+  --1inch-bg-02: #ffffff;
   --1inch-bg-07: #f3f5fa;
   --1inch-bg-36: #f7f9ff;
   --1inch-border-01: #e3e7ee;
   --1inch-border-12: #cadaf4;
   --1inch-shadow-03: none;
   --1inch-shadow-04: 0 12px 24px #e2e9f6;
+  --1inch-btn-shadow-02: 0 0 4px rgba(71, 73, 79, .1), 0 1px 2px rgba(71, 73, 79, .25);
   --1inch-day__background__info: rgba(47, 138, 245, .16);
   --oneinch-bg-info-2ry: rgb(47 138 245 / 16%);
   --oneinch-static-primary-blue: rgb(47 138 245);

@@ -60,4 +60,3 @@ export function getSigner(library: any) {
   if (!library) throw new Error('Library not available');
   return library.getSigner().connectUnchecked();
 }
-

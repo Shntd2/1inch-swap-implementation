@@ -87,6 +87,41 @@
   position: relative;
 }
 
+.swapArrowContainer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: -17px 0;
+  height: 24px;
+  z-index: 1;
+}
+
+.swapArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--1inch-bg-02);
+  box-shadow: var(--1inch-btn-shadow-02);
+  color: var(--1inch-icon-color-01);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.swapArrow:hover {
+  transform: rotate(180deg);
+}
+
+.swapArrow:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .tokenBox {
   display: block;
   width: 100%;

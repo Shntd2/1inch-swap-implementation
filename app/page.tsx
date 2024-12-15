@@ -4,6 +4,7 @@ import styles from "./page.module.css";
 import ConnectIcon from '@/assets/images/icons/connect.svg';
 import RightArrowIcon from '@/assets/images/icons/rightArrow.svg';
 import LeftArrowIcon from '@/assets/images/icons/leftArrow.svg';
+import SwapArrowIcon from '@/assets/images/icons/swapArrow.svg';
 import SearchIcon from '@/assets/images/icons/search.svg';
 import { useState } from 'react';
 import { ChainId, ROUTER_ADDRESSES_1INCH, CHAIN_INFO } from '@/utils/constants';
@@ -13,6 +14,8 @@ import {
   calculateTokenExchangeWithLimit,
   type TokenPrices
 } from '@/utils/tokenPrices';
+
+const MAX_DIGITS = 15;
 
 const processImageUri = (uri: string | undefined, tokenName?: string): string => {
   if (!uri && tokenName) {
@@ -101,6 +104,7 @@ export default function Home() {
   const [fromAmount, setFromAmount] = useState<string>("0");
   const [toAmount, setToAmount] = useState<string>("0");
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
+  const [isRotating, setIsRotating] = useState(false);
   const swapHook = useSwap1Inch();
 
   const fetchTokens = async (chainId: number): Promise<void> => {
@@ -184,14 +188,40 @@ export default function Home() {
     }
   };
 
+  const validateNumberInput = (value: string): string => {
+    // Remove any non-numeric characters except decimal point
+    let sanitized = value.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const decimalCount = (sanitized.match(/\./g) || []).length;
+    if (decimalCount > 1) {
+      const parts = sanitized.split('.');
+      sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Prevent leading zeros before decimal point
+    if (sanitized.startsWith('0') && sanitized.length > 1 && sanitized[1] !== '.') {
+      sanitized = sanitized.slice(1);
+    }
+    
+    // Handle empty or invalid input
+    if (sanitized === '' || sanitized === '.') {
+      return '0';
+    }
+    
+    return formatNumberToFit(sanitized);
+  };
+
   const handleAmountChange = async (value: string, isFromToken: boolean) => {
+    const validatedValue = validateNumberInput(value);
+
     if (isFromToken) {
-      setFromAmount(value);
+      setFromAmount(validatedValue);
       setIsCalculating(true);
-      setError(null); 
+      setError(null);
       
       try {
-        const numericValue = parseFloat(value);
+        const numericValue = parseFloat(validatedValue);
         if (isNaN(numericValue)) {
           setToAmount("0");
           return;
@@ -209,9 +239,7 @@ export default function Home() {
         );
         
         if (exchangeAmount !== null) {
-          setToAmount(exchangeAmount.toFixed(6));
-        } else {
-          // throw new Error("Failed to calculate exchange amount");
+          setToAmount(formatNumberToFit(exchangeAmount.toFixed(6)));
         }
       } catch (error) {
         console.error("Error calculating exchange amount:", error);
@@ -221,8 +249,49 @@ export default function Home() {
         setIsCalculating(false);
       }
     } else {
-      setToAmount(value);
+      setToAmount(formatNumberToFit(validatedValue));
     }
+  };
+
+  const formatNumberToFit = (value: string | number): string => {
+    if (!value || value === '0') return '0';
+    
+    const numStr = value.toString();
+    const [wholePart, decimalPart] = numStr.split('.');
+    
+    if (wholePart.length >= MAX_DIGITS) {
+      return wholePart.slice(0, MAX_DIGITS);
+    }
+    
+    if (decimalPart) {
+      const maxDecimalPlaces = MAX_DIGITS - wholePart.length - 1; // -1 for decimal point
+      if (maxDecimalPlaces <= 0) return wholePart;
+      
+      const truncatedDecimal = decimalPart.slice(0, maxDecimalPlaces);
+      const cleanedDecimal = truncatedDecimal.replace(/0+$/, '');
+      
+      return cleanedDecimal ? `${wholePart}.${cleanedDecimal}` : wholePart;
+    }
+    
+    return numStr;
+  };
+
+  const handleSwapValues = () => {
+    if (!selectedToToken) return;
+
+    setIsRotating(true);
+    
+    const tempFromAmount = fromAmount;
+    const formattedToAmount = formatNumberToFit(toAmount);
+    
+    setFromAmount(formattedToAmount);
+    setToAmount(formatNumberToFit(tempFromAmount));
+    
+    handleAmountChange(formattedToAmount, true);
+    
+    setTimeout(() => {
+      setIsRotating(false);
+    }, 200);
   };
 
   return (
@@ -269,16 +338,41 @@ export default function Home() {
                   </button>
                   <input 
                     type="text" 
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
                     className={styles.tokenInput}
                     placeholder="0.0"
                     value={fromAmount}
                     onChange={(e) => handleAmountChange(e.target.value, true)}
+                    onKeyDown={(e) => {
+                      if (
+                        !/[\d.]/.test(e.key) && 
+                        !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
+                      ) {
+                        e.preventDefault();
+                      }
+                      if (e.key === '.' && fromAmount.includes('.')) {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
                 <div className={styles.tokenName}>
                   {selectedFromToken.name}
                 </div>
               </div>
+              
+              <div className={styles.swapArrowContainer}>
+                <button
+                  onClick={handleSwapValues}
+                  className={styles.swapArrow}
+                  disabled={!selectedToToken}
+                  type="button"
+                >
+                  <SwapArrowIcon width="10" height="10"/>
+                </button>
+              </div>
+
               <div className={styles.tokenBoxTransparent}>
                 <div className={styles.tokenLabel}>You receive</div>
                 <div className={styles.tokenInputContainer}>
@@ -316,15 +410,17 @@ export default function Home() {
                         <path 
                           d="M7 10L12 15L17 10" 
                           stroke="currentColor" 
-                          stroke-width="2" 
-                          stroke-linecap="round" 
-                          stroke-linejoin="round"
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
                         />
                       </svg>
                     </button>
                   )}
                   <input 
                     type="text" 
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
                     className={styles.tokenInput}
                     placeholder="0.0"
                     value={isCalculating ? "" : toAmount}
