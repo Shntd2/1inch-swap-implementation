@@ -464,29 +464,29 @@ export default function Home() {
                       />
                     </div>
                     <div className={styles.chainSelector}>
-                      {Object.entries(ROUTER_ADDRESSES_1INCH).map(([chainId, _]) => {
-                          const numericChainId = Number(chainId) as ChainId;
-                          const chain = CHAIN_INFO[chainId as keyof typeof CHAIN_INFO];
-                          return (
+                    {Object.entries(ROUTER_ADDRESSES_1INCH).map(([chainId, _]) => {
+                        const numericChainId = Number(chainId) as ChainId;
+                        const chain = CHAIN_INFO[numericChainId as keyof typeof CHAIN_INFO];
+                        return (
                             <button
-                              key={chainId}
-                              onClick={() => handleChainSelect(Number(chainId) as ChainId)}
-                              className={`${styles.chainButton} ${
-                                selectedChainId === Number(chainId) ? styles.activeChain : ''
-                              }`}
-                              type="button"
+                                key={chainId}
+                                onClick={() => handleChainSelect(Number(chainId) as ChainId)}
+                                className={`${styles.chainButton} ${
+                                    selectedChainId === Number(chainId) ? styles.activeChain : ''
+                                }`}
+                                type="button"
                             >
-                              <Image 
-                                src={chain.icon}
-                                alt={chain.name}
-                                width={20}
-                                height={20}
-                                className={styles.chainIcon}
-                              />
-                              {chain.name}
-                          </button>
+                                <Image 
+                                    src={chain.icon}
+                                    alt={chain.name}
+                                    width={20}
+                                    height={20}
+                                    className={styles.chainIcon}
+                                />
+                                {chain.name}
+                            </button>
                         )
-                      })}
+                    })}
                     </div>
                   </div>
                   <div className={styles.tokenList}>
