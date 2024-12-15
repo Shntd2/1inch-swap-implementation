@@ -1,8 +1,12 @@
 "use client";
 import Image from "next/image";
 import styles from "./page.module.css";
+import ConnectIcon from '@/assets/images/icons/connect.svg';
+import RightArrowIcon from '@/assets/images/icons/rightArrow.svg';
+import LeftArrowIcon from '@/assets/images/icons/leftArrow.svg';
+import SearchIcon from '@/assets/images/icons/search.svg';
 import { useState } from 'react';
-import { ChainId, ROUTER_ADDRESSES_1INCH } from '@/utils/constants';
+import { ChainId, ROUTER_ADDRESSES_1INCH, CHAIN_INFO } from '@/utils/constants';
 import { useSwap1Inch } from '@/hooks/one-inch';
 import { searchTokens, getChainName } from '@/utils/tokenSearch';
 import { 
@@ -10,7 +14,11 @@ import {
   type TokenPrices
 } from '@/utils/tokenPrices';
 
-const processImageUri = (uri: string | undefined): string => {
+const processImageUri = (uri: string | undefined, tokenName?: string): string => {
+  if (!uri && tokenName) {
+    return generateTokenAvatar(tokenName);
+  }
+  
   if (!uri) return '/token-icon.png';
   
   if (uri.startsWith('ipfs://')) {
@@ -26,6 +34,28 @@ const processImageUri = (uri: string | undefined): string => {
   }
   
   return uri;
+};
+
+const generateTokenAvatar = (name: string): string => {
+  const letter = name.charAt(0).toUpperCase();
+  
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="16" fill="#EBF2FF"/>
+      <text 
+        x="16" 
+        y="16" 
+        dominant-baseline="central" 
+        text-anchor="middle" 
+        fill="#3B82F6" 
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="16"
+        font-weight="500"
+      >${letter}</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 };
 
 interface Token {
@@ -48,11 +78,6 @@ interface SelectedToken {
   address: string;
 }
 
-interface TokenInputProps {
-  amount: string;
-  onAmountChange: (value: string) => void;
-}
-
 function isValidChainId(chainId: number): chainId is keyof typeof ROUTER_ADDRESSES_1INCH {
   return chainId in ROUTER_ADDRESSES_1INCH;
 }
@@ -63,18 +88,13 @@ export default function Home() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedFromToken, setSelectedFromToken] = useState<SelectedToken>({ 
-    symbol: 'WETH', 
-    name: 'Wrapped Ether',
-    logoURI: '/token-icon.png',
-    address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' // WETH address on Ethereum
+    symbol: 'ETH', 
+    name: 'Ether',
+    logoURI: 'https://tokens.1inch.io/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.png',
+    address: '0x0000000000000000000000000000000000000000'
   });
   
-  const [selectedToToken, setSelectedToToken] = useState<SelectedToken>({ 
-    symbol: 'USDT', 
-    name: 'Tether USD',
-    logoURI: '/token-icon.png',
-    address: '0xdac17f958d2ee523a2206206994597c13d831ec7' // USDT address on Ethereum
-  });
+  const [selectedToToken, setSelectedToToken] = useState<SelectedToken | null>(null);
   const [selectedChainId, setSelectedChainId] = useState<ChainId>(ChainId.ETHEREUM);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -208,7 +228,11 @@ export default function Home() {
   return (
     <main className={styles.main}>
       <div className={styles.description}>
-        <p>1inch DEX Aggregator Interface</p>
+        <div className={styles.logoWrapper}>
+          <div className={styles.iconWrapper}>
+            <img alt="" loading="lazy" src="https://cdn.1inch.io/logo-new-year.png"/>
+          </div>
+        </div>
       </div>
 
       <div className={styles.center}>
@@ -221,21 +245,27 @@ export default function Home() {
             
             <div className={styles.swapContent}>
               <div className={styles.tokenBox}>
-                <div className={styles.tokenLabel}>You pay</div>
+                <div className={styles.tokenLabel}>
+                  <a className={styles.tokenExplorerLink}>
+                    You pay
+                  </a>
+                </div>
                 <div className={styles.tokenInputContainer}>
                   <button 
                     onClick={handleFromTokenClick}
-                    className={styles.tokenSelector}
+                    className={styles.tokenFromSelector}
                     type="button"
                   >
                     <Image 
-                      src={processImageUri(selectedFromToken.logoURI)}
+                      src={processImageUri(selectedFromToken.logoURI, selectedFromToken.name)}
                       alt={`${selectedFromToken.symbol} icon`}
                       width={24}
                       height={24}
                       className={styles.tokenIcon}
+                      unoptimized={!selectedFromToken.logoURI}
                     />
                     <span>{selectedFromToken.symbol}</span>
+                    <RightArrowIcon width="17" height="17"/>
                   </button>
                   <input 
                     type="text" 
@@ -249,34 +279,60 @@ export default function Home() {
                   {selectedFromToken.name}
                 </div>
               </div>
-
-              <div className={styles.tokenBox}>
+              <div className={styles.tokenBoxTransparent}>
                 <div className={styles.tokenLabel}>You receive</div>
                 <div className={styles.tokenInputContainer}>
-                  <button 
-                    onClick={handleToTokenClick}
-                    className={styles.tokenSelector}
-                    type="button"
-                  >
-                    <Image 
-                      src={processImageUri(selectedToToken.logoURI)}
-                      alt={`${selectedToToken.symbol} icon`}
-                      width={24}
-                      height={24}
-                      className={styles.tokenIcon}
-                    />
-                    <span>{selectedToToken.symbol}</span>
-                  </button>
+                  {selectedToToken ? (
+                    <button 
+                      onClick={handleToTokenClick}
+                      className={styles.tokenToSelector}
+                      type="button"
+                    >
+                      <Image 
+                        src={processImageUri(selectedToToken.logoURI, selectedToToken.name)}
+                        alt={`${selectedToToken.symbol} icon`}
+                        width={24}
+                        height={24}
+                        className={styles.tokenIcon}
+                        unoptimized={!selectedToToken.logoURI}
+                      />
+                      <span>{selectedToToken.symbol}</span>
+                      <RightArrowIcon width="17" height="17" />
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleToTokenClick}
+                      className={styles.initialTokenToSelector}
+                      type="button"
+                    >
+                      <span>Select a token</span>
+                      <svg 
+                        width="17" 
+                        height="17" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path 
+                          d="M7 10L12 15L17 10" 
+                          stroke="currentColor" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  )}
                   <input 
                     type="text" 
                     className={styles.tokenInput}
                     placeholder="0.0"
-                    value={isCalculating ? "Calculating..." : toAmount}
+                    value={isCalculating ? "" : toAmount}
                     readOnly
                   />
                 </div>
                 <div className={styles.tokenName}>
-                  {selectedToToken.name}
+                  {selectedToToken?.name}
                 </div>
                 {error && (
                   <div className={styles.errorMessage}>
@@ -287,67 +343,93 @@ export default function Home() {
             </div>
 
             {(showFromTokens || showToTokens) && (
-              <div className={styles.tokenListContainer}>
-                <div className={styles.tokenListHeader}>
-                  <button 
-                    onClick={() => showFromTokens ? setShowFromTokens(false) : setShowToTokens(false)} 
-                    className={styles.backButton}
-                    type="button"
-                  >
-                    ←
-                  </button>
-                  <div className={styles.searchContainer}>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={handleSearch}
-                      placeholder="Search by name or paste address"
-                      className={styles.searchInput}
-                    />
+              <>
+                <div className={styles.backdrop} onClick={() => {
+                  setShowFromTokens(false);
+                  setShowToTokens(false);
+                }} />
+                <div className={styles.tokenListContainer}>
+                  <div className={styles.tokenListHeader}>
+                    <button 
+                      onClick={() => showFromTokens ? setShowFromTokens(false) : setShowToTokens(false)} 
+                      className={styles.backButton}
+                      type="button"
+                    >
+                      <LeftArrowIcon width="17" height="17" />
+                    </button>
+                    <div className={styles.searchContainer}>
+                      <SearchIcon width="24" height="24" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleSearch}
+                        placeholder="Search by name or paste address"
+                        className={styles.searchInput}
+                      />
+                    </div>
+                    <div className={styles.chainSelector}>
+                      {Object.entries(ROUTER_ADDRESSES_1INCH).map(([chainId, _]) => {
+                          const numericChainId = Number(chainId) as ChainId;
+                          const chain = CHAIN_INFO[chainId as keyof typeof CHAIN_INFO];
+                          return (
+                            <button
+                              key={chainId}
+                              onClick={() => handleChainSelect(Number(chainId) as ChainId)}
+                              className={`${styles.chainButton} ${
+                                selectedChainId === Number(chainId) ? styles.activeChain : ''
+                              }`}
+                              type="button"
+                            >
+                              <Image 
+                                src={chain.icon}
+                                alt={chain.name}
+                                width={20}
+                                height={20}
+                                className={styles.chainIcon}
+                              />
+                              {chain.name}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className={styles.chainSelector}>
-                    {Object.entries(ROUTER_ADDRESSES_1INCH).map(([chainId, _]) => (
-                      <button
-                        key={chainId}
-                        onClick={() => handleChainSelect(Number(chainId) as ChainId)}
-                        className={`${styles.chainButton} ${
-                          selectedChainId === Number(chainId) ? styles.activeChain : ''
-                        }`}
-                        type="button"
-                      >
-                        {getChainName(Number(chainId) as ChainId)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className={styles.tokenList}>
-                  {isLoading ? (
-                    <div className={styles.loadingContainer}>Loading tokens...</div>
-                  ) : (
-                    tokens.map((token, index) => (
-                      <div 
-                        key={`${token.address}-${index}`}
-                        className={styles.tokenListItem}
-                        onClick={() => handleTokenSelect(token, showFromTokens)}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <Image 
-                          src={processImageUri(token.logoURI)}
-                          alt={token.symbol}
-                          width={24}
-                          height={24}
-                          className={styles.tokenIcon}
-                        />
-                        <div>
-                          <div className={styles.tokenSymbol}>{token.symbol}</div>
-                          <div className={styles.tokenFullName}>{token.name}</div>
+                  <div className={styles.tokenList}>
+                    {isLoading ? (
+                      <div className={styles.loadingContainer}>Loading tokens...</div>
+                    ) : (
+                      tokens.map((token, index) => (
+                        <div 
+                          key={`${token.address}-${index}`}
+                          className={styles.tokenListItem}
+                          onClick={() => handleTokenSelect(token, showFromTokens)}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <div className={styles.tokenItemIcon}>
+                            <Image 
+                              src={processImageUri(token.logoURI, token.name)}
+                              alt={token.symbol}
+                              width={32}
+                              height={32}
+                              className={styles.tokenIcon}
+                            />
+                            <div>
+                              <div className={styles.tokenSymbol}>
+                                {token.symbol}
+                              </div>
+                              <div className={styles.tokenFullName}>
+                                {token.name}
+                              </div>
+                            </div>
+                          </div>
+                          <div className={styles.tokenBalance}>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             <button 
@@ -355,6 +437,7 @@ export default function Home() {
               className={styles.connectButton}
               type="button"
             >
+              <ConnectIcon width="24" height="24" />
               Connect wallet
             </button>
           </div>

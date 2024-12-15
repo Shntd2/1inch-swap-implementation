@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: [
+        {
+          loader: '@svgr/webpack',
+          options: {
+            svgo: true, 
+          },
+        },
+      ],
+    });
+    return config;
+  },
   images: {
     domains: [
       'tokens.1inch.io',
@@ -15,7 +29,11 @@ const nextConfig = {
       'ipfs.io',
       'gateway.ipfs.io',   
       'dweb.link',
-      'assets.spooky.fi'
+      'assets.spooky.fi',
+      'cdn.furucombo.app',
+      'ethereum-optimism.github.io',
+      'snowtrace.io',
+      'etherscan.io'
     ],
   },
 };

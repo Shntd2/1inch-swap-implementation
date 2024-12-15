@@ -40,10 +40,56 @@ export const ROUTER_ADDRESSES_1INCH = {
   [ChainId.POLYGON]: default1InchRouterAddress,
   [ChainId.ETHEREUM]: default1InchRouterAddress,
   [ChainId.OPTIMISM]: default1InchRouterAddress,
-  [ChainId.AURORA]: default1InchRouterAddress,
   [ChainId.AVALANCHE]: default1InchRouterAddress,
   [ChainId.ZKSYNC]: default1InchRouterAddress,
   [ChainId.GNOSIS]: default1InchRouterAddress,
   [ChainId.KLAYTN]: default1InchRouterAddress,
   [ChainId.BINANCE]: default1InchRouterAddress
 }
+
+export const CHAIN_INFO = {
+  [ChainId.ETHEREUM]: {
+    name: 'ETHEREUM',
+    icon: 'https://tokens.1inch.io/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.png'
+  },
+  [ChainId.ARBITRUM]: {
+    name: 'ARBITRUM',
+    icon: 'https://assets.coingecko.com/coins/images/16547/thumb/photo_2023-03-29_21.47.00.jpeg'
+  },
+  [ChainId.POLYGON]: {
+    name: 'POLYGON',
+    icon: 'https://tokens.1inch.io/0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0.png'
+  },
+  [ChainId.OPTIMISM]: {
+    name: 'OPTIMISM',
+    icon: 'https://assets.coingecko.com/coins/images/25244/thumb/Optimism.png'
+  },
+  [ChainId.AVALANCHE]: {
+    name: 'AVALANCHE',
+    icon: 'https://tokens.1inch.io/0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7.png'
+  },
+  [ChainId.GNOSIS]: {
+    name: 'GNOSIS',
+    icon: 'https://tokens.1inch.io/0x6810e776880c02933d47db1b9fc05908e5386b96.png'
+  },
+  [ChainId.BINANCE]: {
+    name: 'BSC',
+    icon: 'https://tokens.1inch.io/0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c.png'
+  },
+  [ChainId.BASE]: {
+    name: 'BASE',
+    icon: 'https://tokens.1inch.io/0x4200000000000000000000000000000000000006.png'
+  },
+  [ChainId.FANTOM]: {
+    name: 'FANTOM',
+    icon: 'https://tokens.1inch.io/0x4e15361fd6b4bb609fa63c81a2be19d873717870.png'
+  },
+  [ChainId.ZKSYNC]: {
+    name: 'ZKSYNC',
+    icon: 'https://tokens-data.1inch.io/images/0x5a7d6b2f92c77fad6ccabd7ee0624e64907eaf3e.png' 
+  },
+  [ChainId.KLAYTN]: {
+    name: 'KLAYTN',
+    icon: 'https://assets.coingecko.com/coins/images/9672/thumb/klaytn.png'
+  }
+} as const;
